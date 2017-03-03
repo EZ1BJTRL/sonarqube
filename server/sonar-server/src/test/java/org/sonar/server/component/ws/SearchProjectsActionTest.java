@@ -474,9 +474,9 @@ public class SearchProjectsActionTest {
     assertThat(facet.getValuesList())
       .extracting(Common.FacetValue::getVal, Common.FacetValue::getCount)
       .containsExactly(
-        tuple("xoo", 35L),
-        tuple("java", 26L),
-        tuple("<null>", 7L));
+        tuple("xoo", 4L),
+        tuple("java", 3L),
+        tuple("<null>", 2L));
   }
 
   @Test

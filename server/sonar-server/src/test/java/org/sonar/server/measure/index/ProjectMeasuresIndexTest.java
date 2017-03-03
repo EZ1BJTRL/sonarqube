@@ -20,6 +20,7 @@
 package org.sonar.server.measure.index;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -946,7 +947,7 @@ public class ProjectMeasuresIndexTest {
       entry(OK.name(), 2L),
       entry(WARN.name(), 3L),
       entry(ERROR.name(), 3L));
-    // But facet on ncloc does well take into into filters
+    // But facet on ncloc does well take account into filters
     assertThat(facets.get(NCLOC)).containsExactly(
       entry("*-1000.0", 1L),
       entry("1000.0-10000.0", 1L),
@@ -985,7 +986,7 @@ public class ProjectMeasuresIndexTest {
   }
 
   @Test
-  public void facet_languages() {
+  public void facet_language() {
     index(
       newDoc().setLanguages(ImmutableMap.of("java", 6)),
       newDoc().setLanguages(ImmutableMap.of("java", 8)),
@@ -997,16 +998,52 @@ public class ProjectMeasuresIndexTest {
     Facets facets = underTest.search(new ProjectMeasuresQuery(), new SearchOptions().addFacets(LANGUAGE)).getFacets();
 
     assertThat(facets.get(LANGUAGE)).containsOnly(
-      entry("<null>", 12L),
-      entry("java", 21L),
-      entry("xoo", 30L),
-      entry("xml", 4L));
+      entry("<null>", 2L),
+      entry("java", 4L),
+      entry("xoo", 2L),
+      entry("xml", 1L));
   }
 
-  // TODO
   @Test
-  public void facet_languages_is_sticky() {
+  public void facet_language_is_limited_to_10_languages() {
+    index(
+      newDoc().setLanguages(ImmutableMap.of("<null>", 10, "java", 2, "xoo", 12, "css", 4, "cpp", 1)),
+      newDoc().setLanguages(ImmutableMap.of("xml", 9, "php", 3, "python", 11, "perl", 3, "ruby", 7)),
+      newDoc().setLanguages(ImmutableMap.of("js", 20, "scala", 6)
+      ));
 
+    Facets facets = underTest.search(new ProjectMeasuresQuery(), new SearchOptions().addFacets(LANGUAGE)).getFacets();
+
+    assertThat(facets.get(LANGUAGE)).hasSize(10);
+  }
+
+  @Test
+  public void facet_language_is_sticky() {
+    index(
+      newDoc(NCLOC, 10d).setLanguages(ImmutableMap.of("java", 6)),
+      newDoc(NCLOC, 10d).setLanguages(ImmutableMap.of("java", 8)),
+      newDoc(NCLOC, 10d).setLanguages(ImmutableMap.of("xoo", 18)),
+      newDoc(NCLOC, 100d).setLanguages(ImmutableMap.of("xml", 4)),
+      newDoc(NCLOC, 100d).setLanguages(ImmutableMap.of("<null>", 2, "java", 5)),
+      newDoc(NCLOC, 5000d).setLanguages(ImmutableMap.of("<null>", 10, "java", 2, "xoo", 12)));
+
+    Facets facets = underTest.search(
+      new ProjectMeasuresQuery().setLanguages(ImmutableSet.of("java")),
+      new SearchOptions().addFacets(LANGUAGE, NCLOC)).getFacets();
+
+    // Sticky facet on language does not take into account language filter
+    assertThat(facets.get(LANGUAGE)).containsOnly(
+      entry("<null>", 2L),
+      entry("java", 4L),
+      entry("xoo", 2L),
+      entry("xml", 1L));
+    // But facet on ncloc does well take account into filters
+    assertThat(facets.get(NCLOC)).containsExactly(
+      entry("*-1000.0", 3L),
+      entry("1000.0-10000.0", 1L),
+      entry("10000.0-100000.0", 0L),
+      entry("100000.0-500000.0", 0L),
+      entry("500000.0-*", 0L));
   }
 
   @Test
@@ -1025,8 +1062,8 @@ public class ProjectMeasuresIndexTest {
     LinkedHashMap<String, Long> result = underTest.search(new ProjectMeasuresQuery(), new SearchOptions().addFacets(LANGUAGE)).getFacets().get(LANGUAGE);
 
     assertThat(result).containsOnly(
-      entry("java", 7L),
-      entry("xoo", 5L));
+      entry("java", 2L),
+      entry("xoo", 1L));
   }
 
   private void index(ProjectMeasuresDoc... docs) {

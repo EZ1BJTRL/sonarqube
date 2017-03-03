@@ -91,7 +91,6 @@ public class ProjectMeasuresIndex extends BaseIndex {
   private static final String FIELD_MEASURES_VALUE = FIELD_MEASURES + "." + ProjectMeasuresIndexDefinition.FIELD_MEASURES_VALUE;
 
   private static final String FIELD_LANGUAGES_KEY = FIELD_LANGUAGES + "." + ProjectMeasuresIndexDefinition.FIELD_LANGUAGES_KEY;
-  private static final String FIELD_LANGUAGES_VALUE = FIELD_LANGUAGES + "." + ProjectMeasuresIndexDefinition.FIELD_LANGUAGES_VALUE;
 
   private static final Map<String, FacetSetter> FACET_FACTORIES = ImmutableMap.<String, FacetSetter>builder()
     .put(NCLOC_KEY, (esSearch, filters) -> addRangeFacet(esSearch, NCLOC_KEY, ImmutableList.of(1_000d, 10_000d, 100_000d, 500_000d), filters))
@@ -225,9 +224,7 @@ public class ProjectMeasuresIndex extends BaseIndex {
       .path(FIELD_LANGUAGES)
       .subAggregation(
         AggregationBuilders.terms(FILTER_LANGUAGE)
-          .field(FIELD_LANGUAGES_KEY)
-          .subAggregation(AggregationBuilders.sum("size_" + FILTER_LANGUAGE)
-            .field(FIELD_LANGUAGES_VALUE)));
+          .field(FIELD_LANGUAGES_KEY));
   }
 
   private Map<String, QueryBuilder> createFilters(ProjectMeasuresQuery query) {
