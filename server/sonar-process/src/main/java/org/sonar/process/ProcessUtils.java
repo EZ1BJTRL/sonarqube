@@ -43,7 +43,7 @@ public class ProcessUtils {
    * Correctly tested on Java 6 and 7 on both Mac/MSWindows
    * @return true if the signal is sent, false if process is already down
    */
-  public static boolean sendKillSignal(@Nullable Process process) {
+  public static boolean sendKillSignal(Process process) {
     boolean sentSignal = false;
     if (isAlive(process)) {
       try {

@@ -34,7 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonar.process.AllProcessesCommands;
 import org.sonar.process.Props;
-import org.sonar.process.monitor.FileSystem;
+import org.sonar.process.monitor2.FileSystem;
 
 import static java.lang.String.format;
 import static java.nio.file.FileVisitResult.CONTINUE;

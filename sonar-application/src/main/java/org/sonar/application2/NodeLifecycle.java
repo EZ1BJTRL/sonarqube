@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.process;
+package org.sonar.application2;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -32,20 +32,17 @@ import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.sonar.process.Lifecycle.State.HARD_STOPPING;
-import static org.sonar.process.Lifecycle.State.INIT;
-import static org.sonar.process.Lifecycle.State.OPERATIONAL;
-import static org.sonar.process.Lifecycle.State.RESTARTING;
-import static org.sonar.process.Lifecycle.State.STARTED;
-import static org.sonar.process.Lifecycle.State.STARTING;
-import static org.sonar.process.Lifecycle.State.STOPPED;
-import static org.sonar.process.Lifecycle.State.STOPPING;
+import static org.sonar.application2.NodeLifecycle.State.INIT;
+import static org.sonar.application2.NodeLifecycle.State.OPERATIONAL;
+import static org.sonar.application2.NodeLifecycle.State.STARTING;
+import static org.sonar.application2.NodeLifecycle.State.STOPPED;
+import static org.sonar.application2.NodeLifecycle.State.STOPPING;
 
-public class Lifecycle {
-  private static final Logger LOG = LoggerFactory.getLogger(Lifecycle.class);
+public class NodeLifecycle {
+  private static final Logger LOG = LoggerFactory.getLogger(NodeLifecycle.class);
 
   public enum State {
-    INIT, STARTING, STARTED, OPERATIONAL, RESTARTING, STOPPING, HARD_STOPPING, STOPPED
+    INIT, STARTING, OPERATIONAL, STOPPING, STOPPED
   }
 
   private static final Map<State, Set<State>> TRANSITIONS = buildTransitions();
@@ -53,20 +50,17 @@ public class Lifecycle {
   private final List<LifecycleListener> listeners;
   private State state = INIT;
 
-  public Lifecycle(LifecycleListener... listeners) {
+  public NodeLifecycle(LifecycleListener... listeners) {
     this.listeners = Arrays.stream(listeners).filter(Objects::nonNull).collect(Collectors.toList());
   }
 
   private static Map<State, Set<State>> buildTransitions() {
     Map<State, Set<State>> res = new EnumMap<>(State.class);
     res.put(INIT, toSet(STARTING));
-    res.put(STARTING, toSet(STARTED, OPERATIONAL, STOPPING, HARD_STOPPING));
-    res.put(STARTED, toSet(OPERATIONAL, RESTARTING, STOPPING, HARD_STOPPING));
-    res.put(OPERATIONAL, toSet(RESTARTING, STOPPING, HARD_STOPPING));
-    res.put(RESTARTING, toSet(STARTING, HARD_STOPPING));
+    res.put(STARTING, toSet(OPERATIONAL, STOPPING, STOPPED));
+    res.put(OPERATIONAL, toSet(STOPPING, STOPPED));
     res.put(STOPPING, toSet(STOPPED));
-    res.put(HARD_STOPPING, toSet(STOPPED));
-    res.put(STOPPED, toSet());
+    res.put(STOPPED, toSet(STARTING));
     return res;
   }
 
@@ -104,7 +98,7 @@ public class Lifecycle {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    Lifecycle lifecycle = (Lifecycle) o;
+    NodeLifecycle lifecycle = (NodeLifecycle) o;
     return state == lifecycle.state;
   }
 
