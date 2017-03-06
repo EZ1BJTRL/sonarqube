@@ -59,11 +59,11 @@ public class Lifecycle {
 
   private static Map<State, Set<State>> buildTransitions() {
     Map<State, Set<State>> res = new EnumMap<>(State.class);
-    res.put(INIT, toSet(STARTING));
-    res.put(STARTING, toSet(STARTED, OPERATIONAL, STOPPING, HARD_STOPPING));
-    res.put(STARTED, toSet(OPERATIONAL, RESTARTING, STOPPING, HARD_STOPPING));
-    res.put(OPERATIONAL, toSet(RESTARTING, STOPPING, HARD_STOPPING));
-    res.put(RESTARTING, toSet(STARTING, HARD_STOPPING));
+    res.put(INIT, toSet(STARTING, STOPPED));
+    res.put(STARTING, toSet(STARTED, OPERATIONAL, STOPPING, HARD_STOPPING, STOPPED));
+    res.put(STARTED, toSet(OPERATIONAL, RESTARTING, STOPPING, HARD_STOPPING, STOPPED));
+    res.put(OPERATIONAL, toSet(RESTARTING, STOPPING, HARD_STOPPING, STOPPED));
+    res.put(RESTARTING, toSet(STARTING, HARD_STOPPING, STOPPED));
     res.put(STOPPING, toSet(STOPPED));
     res.put(HARD_STOPPING, toSet(STOPPED));
     res.put(STOPPED, toSet());

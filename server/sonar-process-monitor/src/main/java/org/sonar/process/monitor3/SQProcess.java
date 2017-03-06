@@ -52,7 +52,7 @@ public class SQProcess {
 
   void monitor(Process process, ProcessCommands commands) {
     this.process = process;
-    this.commands= commands;
+    this.commands = commands;
     this.gobbler = new StreamGobbler(process.getInputStream(), processId.getKey());
     this.gobbler.start();
     this.stopWatcher = new StopWatcher();
@@ -163,13 +163,10 @@ public class SQProcess {
 
     @Override
     public void run() {
-      System.out.println("-----");
       try {
         while (!isOperational()) {
-          System.out.println("not operational " + processId);
           Thread.sleep(250L);
         }
-        System.out.println("operational " + processId);
         changeStateToOperational();
       } catch (InterruptedException e) {
         // stop watching process

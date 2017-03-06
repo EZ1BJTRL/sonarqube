@@ -26,8 +26,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.sonar.process.Lifecycle;
 import org.sonar.process.ProcessId;
+import org.sonar.process.monitor.Monitor;
 import org.sonar.process.monitor3.JavaCommand;
 import org.sonar.process.monitor3.JavaProcessLauncher;
 import org.sonar.process.monitor3.ProcessStateListener;
@@ -36,6 +39,8 @@ import org.sonar.process.monitor3.SQProcess;
 import static java.util.Collections.singletonList;
 
 public class SchedulerImpl implements Scheduler, ProcessStateListener {
+
+  private static final Logger LOG = LoggerFactory.getLogger(Monitor.class);
 
   private final JavaCommandFactory javaCommandFactory;
   private final JavaProcessLauncher javaProcessLauncher;
@@ -139,9 +144,8 @@ public class SchedulerImpl implements Scheduler, ProcessStateListener {
     restartRequested.set(false);
 
     if (nodeLifecycle.tryToMoveTo(NodeLifecycle.State.STOPPING)) {
-      System.out.println("stopping...");
+      LOG.info("Stopping SonarQube");
       tryToStopAll();
-      System.out.println("waiting for stopped...");
     }
     awaitTermination();
   }
@@ -158,9 +162,10 @@ public class SchedulerImpl implements Scheduler, ProcessStateListener {
   @Override
   public void onProcessOperational(ProcessId processId) {
     // TODO log "xxx is up"
+    LOG.info("Process [{}] is up", processId.getKey());
     appState.setOperational(processId);
     if (operationalCountDown.decrementAndGet() == 0 && nodeLifecycle.tryToMoveTo(NodeLifecycle.State.OPERATIONAL)) {
-      System.out.println("SonarQube is up");
+      LOG.info("SonarQube is up");
     } else if (nodeLifecycle.getState() == NodeLifecycle.State.STARTING) {
       tryToStartAll();
     }
@@ -168,9 +173,10 @@ public class SchedulerImpl implements Scheduler, ProcessStateListener {
 
   @Override
   public void onProcessStop(ProcessId processId) {
+    LOG.info("Process [{}] is stopped", processId.getKey());
     if (stopCountDown.decrementAndGet() == 0 && nodeLifecycle.tryToMoveTo(NodeLifecycle.State.STOPPED)) {
       // all processes are stopped
-      System.out.println("SonarQube is stopped");
+      LOG.info("SonarQube is stopped");
       if (restartRequested.compareAndSet(true, false) && nodeLifecycle.tryToMoveTo(NodeLifecycle.State.STARTING)) {
         // TODO start async
       } else {
@@ -178,6 +184,7 @@ public class SchedulerImpl implements Scheduler, ProcessStateListener {
       }
 
     } else if (nodeLifecycle.tryToMoveTo(NodeLifecycle.State.STOPPING)) {
+      LOG.info("Process [{}] is stopping", processId.getKey());
       // this is the first process stopping
       stopperThread = new StopperThread();
       stopperThread.start();
