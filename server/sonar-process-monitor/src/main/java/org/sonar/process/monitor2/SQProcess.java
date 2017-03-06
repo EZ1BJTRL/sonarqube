@@ -62,7 +62,7 @@ public class SQProcess {
    * executed). It depends on OS.
    */
   void stop() {
-    if (ProcessUtils.isAlive(process)) {
+    if (process.isAlive()) {
       try {
         ProcessUtils.sendKillSignal(process);
         // signal is sent, waiting for shutdown hooks to be executed (or not... it depends on OS)
@@ -84,7 +84,7 @@ public class SQProcess {
   }
 
   public State getState() {
-    if (!ProcessUtils.isAlive(process)) {
+    if (!process.isAlive()) {
       return State.STOPPED;
     }
     if (commands.isUp()) {
