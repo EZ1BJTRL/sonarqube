@@ -35,15 +35,7 @@ public class ProcessUtils {
    * @return false if process is null or terminated, else true.
    */
   public static boolean isAlive(@Nullable Process process) {
-    boolean alive = false;
-    if (process != null) {
-      try {
-        process.exitValue();
-      } catch (IllegalThreadStateException ignored) {
-        alive = true;
-      }
-    }
-    return alive;
+    return process == null ? false : process.isAlive();
   }
 
   /**
